@@ -7,9 +7,49 @@
     export let data: {contacts: {id: string, name: string, phone: string}[]};
 
     let drawerOpen = false;
+    let selectedContact: null | {id: string, name: string, phone: string} = null;
+    let messages: {content: string}[] = [];
+    let loadingMessages = false;
+    let errorLoadingMessages = '';
 
     function toggleDrawer() {
         drawerOpen = !drawerOpen;
+    }
+
+    function delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function selectContact(contact: {id: string, name: string, phone: string}) {
+        selectedContact = contact;
+        messages = [];
+        loadingMessages = true;
+        errorLoadingMessages = '';
+
+        try {
+            // const response = await fetch(`/api/messages/${contact.id}`);
+            // if (!response.ok) {
+            //     throw new Error('Failed to load messages');
+            // }
+            // messages = await response.json();
+
+            await delay(2000);
+
+            messages = contact.id === '1' ? [
+                { content: "Salut, comment vas-tu ?" },
+                { content: "Je vais bien, merci ! Et toi ?" }
+            ] : contact.id === '2' ? [
+                { content: "Bonjour !" },
+                { content: "Salut ! Comment ça va ?" }
+            ] : contact.id === '3' ? [
+                { content: "Hey !" },
+                { content: "Salut, comment vas-tu ?" }
+            ] : [];
+        } catch (error: any) {
+            errorLoadingMessages = error.message;
+        } finally {
+            loadingMessages = false;
+        }
     }
 </script>
 
@@ -70,27 +110,37 @@
             <h2 class="text-lg font-semibold mb-4">Contacts</h2>
             <ContactList>
                 {#each data.contacts as contact}
-                    <ContactCard name={contact.name} phone={contact.phone} />
+                    <ContactCard name={contact.name} phone={contact.phone} onClick={() => selectContact(contact)}/>
                 {/each}
             </ContactList>
         </div>
 
-      <!-- Message Content -->
-        <div class="w-2/3 bg-base-100 p-4 overflow-y-auto">
-            <h2 class="text-lg font-semibold mb-4">John Doe</h2>
-            <div class="space-y-4">
-                <div class="chat chat-start">
-                    <div class="chat-bubble chat-bubble-primary">
-                        Salut, comment vas-tu ?
+        <div class="w-2/3 bg-base-100 p-4 overflow-y-auto relative">
+            {#if selectedContact}
+                <h2 class="text-lg font-semibold mb-4">{selectedContact.name}</h2>
+
+                {#if loadingMessages}
+                    <!-- Loader centered -->
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="loading loading-spinner loading-lg"></span>
                     </div>
-                </div>
-                <div class="chat chat-end">
-                    <div class="chat-bubble chat-bubble-secondary">
-                        Je vais bien, merci ! Et toi ?
+                {:else if errorLoadingMessages}
+                    <p class="text-center text-red-500">Erreur : {errorLoadingMessages}</p>
+                {:else}
+                    <div class="space-y-4">
+                        {#each messages as message}
+                            <div class={`chat chat-start`}>
+                                <div class={`chat-bubble`}>
+                                    {message.content}
+                                </div>
+                            </div>
+                        {/each}
                     </div>
-                </div>
-                <!-- Ajouter plus de messages ici -->
-            </div>
+                {/if}
+            {:else}
+                <h2 class="text-lg font-semibold mb-4">Messages</h2>
+                <p class="text-center text-gray-500">Sélectionnez un contact pour voir les messages</p>
+            {/if}
         </div>
     </div>
 </main>
